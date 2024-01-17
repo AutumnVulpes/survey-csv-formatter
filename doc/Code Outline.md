@@ -1,36 +1,30 @@
 # Transforming KS Backer Survey Response for Fulfilment
 
-1.  Initial KS file is sorted by backer number
-    1.  Things to note
-        1.  KS Data is in FULL NAME
-2.  Just to check, sweep initial CSV for bad cells/entries
-    1.  Eg. Missing data from name, address, etc and throw up where errors were encountered for manual inspection
-3.  Sort by backer tier
-4.  Format the new blank csv for fulfillers with appropriate headers
-    1.  Headers
-        1.  Warehouse
-        2.  Reference Number (Can use backer ID)
-        3.  FIRST NAME
-        4.  LAST NAME
-        5.  Address Line 1
-        6.  Address Line 2
-        7.  City
-        8.  State
-        9.  Country/Region Code
-        10. Zip Code
-        11. Phone
-        12. SKU
-        13. Quantity
-        14. Shipping Method (fill with Becky)
-        15. Email
-    2.  Notes
-        1.  Note: Each individual item must be assigned it's own row (ie only 1 product SKU per row constraint)
-            1.  Therefore, bundle would take 3 rows (base game, coins, zine)
-        2.  Some recipients have special instruction
-        3.  Check if we need inured value
-5.  One loop per tier
-    1.  Adding the base items of that tier per backer (Eg, Only AP box for basic, or box + zine + coins for bundle tier)
-    2.  For each backer, check for addons and add
-        1.  If person with bundle added on more coins/zine, increment the existing qty by 1
-    3.  Handling of names
-        1.  Current proposal: Slice last word as "Last Name", remove space and everything before it as "First Name"
+## Introduction
+
+Different companies and businesses often have their own preferred templates for csv (comma seperated value) files, along with differences in the mandatory information required in them. Hence, this program is designed to automatically filter a csv file for empty cells, read and write desired data into a new csv with a different format, and even transform/edit the data depending on the requirements. This will save time, eliminate human error that could occur during manual copying and editing.
+
+This is a self contained solo project, with the requirements to take in an input csv, filter out unwanted data with certain tags and empty cells. Then, read the remaining data to identify what is desired and finally write that into a new csv format which is the output, and needs no further editing.
+
+## Context
+
+In this use case, the program is being used to sort and filter a kickstarter backer survey csv, and prepare it in a template provided by a shipping and fulfilment company. The required fields are: Backer ID, first name, last name, address, city, state, country, zip code, telephone, product SKu to be shipped, and quantity.
+
+Other requirements is that each row can only hold one product SKU at a time, so if a backer has backed at a tier with multiple items, or added them as add-ons, each item would need to be added as a seperate row; Also sorting out backers who have yet to respond to the survey into another csv for future follow up.
+
+Finally, the fulfiller's template would require splitting it into a first and last name. While a model could be trained on a dataset of different names from different cultures and backgrounds in order to accurately read what would be a first and last name, that is outside the scope of this program.
+
+## Design Details
+
+1.  Filter out any backer without items to be shipped.
+2.  Save any backer who has items that require shipping but "Survey Response Date" cell is empty to a new csv and output that to track which backers have yet to provide information. Then, remove those rows.
+3.  Create dict of lists with all required info in new format.
+    1.  For names, simply take the firsst word as first name and the rest as last name.
+    2.  For each backer with addons or at a tier with additional items, add another list duplicating all their info except with the new SKU.
+4.  Each entry in the intermediate dict gets inserted into the new csv, where each list is a row and each item is an individual cell.
+
+## Alternatives considered \[WIP\]
+
+Use of pandas vs csv only  
+Dict of lists vs Dict of dicts  
+Why not just read and write directly from input csv to output csv
