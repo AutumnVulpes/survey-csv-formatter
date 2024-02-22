@@ -1,5 +1,9 @@
 import csv
-ks_response = csv.DictReader(open("ks_data.csv"))
+import sys
+
+# Takes in csv from input file path in command line when code is run
+input_csv = sys.argv[1]
+ks_response = csv.DictReader(open(input_csv))
 
 # Function to check if backer responded to survey
 def is_survey_responder(ks_data_row):
