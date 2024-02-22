@@ -5,8 +5,8 @@ ks_response = csv.DictReader(open("ks_data.csv"))
 def is_survey_responder(ks_data_row):
     return bool(row["Shipping Address 1"])
 
-# Function to create a dictionary entry of each backer's required info
-def create_backer_entry(ks_data_row):
+# Function to create a dictionary of each backer's required info
+def row_to_backer_dict(ks_data_row):
 
     temp_dict = {}
 
@@ -16,35 +16,33 @@ def create_backer_entry(ks_data_row):
         'remarks' : row["Shipping Delivery Notes"]
         }
 
-    backer_dict = temp_dict[int(row["Backer UID"])]
-
     name_parse = row["Shipping Name"].split(" ", 1)
     if len(name_parse) == 1:
         first_name, last_name = row["Shipping Name"], ""
     else:
         first_name, last_name = row["Shipping Name"].split(" ", 1)
 
-    backer_dict['backer_details']['first_name'] = first_name
-    backer_dict['backer_details']['last_name'] = last_name
-    backer_dict['backer_details']['email'] = row["Email"]
-    backer_dict['backer_details']['address_line_1'] = row["Shipping Address 1"]
-    backer_dict['backer_details']['address_line_2'] = row["Shipping Address 2"]
-    backer_dict['backer_details']['city'] = row["Shipping City"]
-    backer_dict['backer_details']['state'] = row["Shipping State"]
-    backer_dict['backer_details']['country_code'] = row["Shipping Country Code"]
-    backer_dict['backer_details']['zip_code'] = row["Shipping Postal Code"]
-    backer_dict['backer_details']['phone'] = row["Shipping Phone Number"]
+    temp_dict['backer_details']['first_name'] = first_name
+    temp_dict['backer_details']['last_name'] = last_name
+    temp_dict['backer_details']['email'] = row["Email"]
+    temp_dict['backer_details']['address_line_1'] = row["Shipping Address 1"]
+    temp_dict['backer_details']['address_line_2'] = row["Shipping Address 2"]
+    temp_dict['backer_details']['city'] = row["Shipping City"]
+    temp_dict['backer_details']['state'] = row["Shipping State"]
+    temp_dict['backer_details']['country_code'] = row["Shipping Country Code"]
+    temp_dict['backer_details']['zip_code'] = row["Shipping Postal Code"]
+    temp_dict['backer_details']['phone'] = row["Shipping Phone Number"]
 
-    backer_dict['product_skus']['AEY-PROP-01'] = (
+    temp_dict['product_skus']['AEY-PROP-01'] = (
        int(row["Everything in previous tier"]) + int(row["ARCANA PROPHETIA"])
     )
-    backer_dict['product_skus']['AEY-PROP-02'] = (
+    temp_dict['product_skus']['AEY-PROP-02'] = (
        int(row["Everything in previous tier"]) + int(row["Additional Metal Sigils"])
     )
-    backer_dict['product_skus']['AEY-PROP-03'] = (
+    temp_dict['product_skus']['AEY-PROP-03'] = (
        int(row["Everything in previous tier"]) + int(row["Physical Art and Lore Zine"])
     )
-    backer_dict['product_skus']['AEY-KAWA-01'] = int(row["KAWA: A Game About Flow"])
+    temp_dict['product_skus']['AEY-KAWA-01'] = int(row["KAWA: A Game About Flow"])
 
     return temp_dict
 
@@ -53,14 +51,14 @@ responder_dict = {}
 non_response_dict = {}    
 for row in ks_response:
   if is_survey_responder(row):
-    create_backer_entry(row)
-    responder_dict[int(row["Backer UID"])] = create_backer_entry(row)
+    row_to_backer_dict(row)
+    responder_dict[int(row["Backer UID"])] = row_to_backer_dict(row)
   else:
-    non_response_dict[int(row["Backer UID"])] = create_backer_entry(row)
+    non_response_dict[int(row["Backer UID"])] = row_to_backer_dict(row)
 
 # Function to convert above dictionaries into lists for csv writing
 # Each SKU ordered by each is a new item in list (so backer with SKU A and B is 2 items)    
-def create_csv_list(target_dict):
+def collate_backer_dicts_for_output(target_dict):
     temp_list = []
 
     for backer in target_dict:
@@ -89,11 +87,7 @@ def create_csv_list(target_dict):
 
     return temp_list
 
-# Creation of list for responders and non-responders
-shipping_list = create_csv_list(responder_dict)
-non_response_list = create_csv_list(non_response_dict)
-
-# Function to write responder and non-responder lists into csvs
+# Write responder and non-responder lists into csvs
 def create_output_csv(new_csv, target_list):
     csvfile = open(new_csv, 'w', newline='', encoding='utf-8')
     c = csv.writer(csvfile)
@@ -109,6 +103,6 @@ def create_output_csv(new_csv, target_list):
 
     csvfile.close()
 
-# Creation of two output csv; responders and non-responders
-create_output_csv('shipping_info.csv', shipping_list)
-create_output_csv('non_response.csv', non_response_list)
+# Create two output csvs; responders and non-responders
+create_output_csv('shipping_info.csv', collate_backer_dicts_for_output(responder_dict))
+create_output_csv('non_response.csv', collate_backer_dicts_for_output(non_response_dict))
